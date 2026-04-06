@@ -46,11 +46,11 @@ module "eks" {
   }
 
   eks_managed_node_groups = {
-    g6e = {
+    g5 = {
       # The EKS AL2023 NVIDIA AMI provides all of the necessary components
       # for accelerated workloads w/ EFA
       ami_type       = "AL2023_x86_64_NVIDIA"
-      instance_types = ["g6e.xlarge"]
+      instance_types = ["g5.xlarge"]
 
       min_size     = 1
       max_size     = 10
@@ -73,16 +73,13 @@ module "eks" {
         }
       ]
 
-      # This will:
-      # 1. Create a placement group to place the instances close to one another
-      # 2. Ignore subnets that reside in AZs that do not support the instance type
-      # 3. Expose all of the available EFA interfaces on the launch template
-      enable_efa_support = true
-      subnet_ids         = [element(module.vpc.private_subnets, 2)]
+      # EFA support — uncomment for multi-node (pipeline parallel) setu
+      # enable_efa_support = true
+      # subnet_ids         = [element(module.vpc.private_subnets, 2)]
 
       labels = {
-        "vpc.amazonaws.com/efa.present" = "true"
-        "nvidia.com/gpu.present"        = "true"
+        # "vpc.amazonaws.com/efa.present" = "true"  # uncomment with EFA
+        "nvidia.com/gpu.present" = "true"
       }
 
       taints = {

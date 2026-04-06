@@ -30,35 +30,36 @@ spec:
       spec:
         containers:
           - name: vllm-leader
-            image: <image-built-from-dockerfile>
+            image: vllm/vllm-openai:latest
             imagePullPolicy: Always
             env:
-              - name: FI_PROVIDER
-                value: efa
+              # Uncomment for multi-node EFA setup:
+              # - name: FI_PROVIDER
+              #   value: efa
               - name: HUGGING_FACE_HUB_TOKEN
-                value: <your-hf-token>
+                value: <hf_token>
               - name: HF_HUB_ENABLE_HF_TRANSFER
-                value: '1'
+                value: "1"
               - name: NCCL_DEBUG
                 value: INFO
               - name: NCCL_NET_GDR_LEVEL
-                value: '0'
+                value: "0"
               - name: NCCL_NVLS_ENABLE
-                value: '0'
+                value: "0"
               - name: NCCL_SHM_USE_CUDA_MEMCPY
-                value: '1'
+                value: "1"
             command:
               - sh
               - -c
-              - 'python3 -m vllm.entrypoints.openai.api_server --port 8080 --model meta-llama/Llama-3.1-8B-Instruct --max-model-len 8192 --tensor-parallel-size 1 --pipeline-parallel-size 1'
+              - "python3 -m vllm.entrypoints.openai.api_server --port 8080 --model meta-llama/Llama-3.1-8B-Instruct --max-model-len 4096 --tensor-parallel-size 1 --pipeline-parallel-size 1"
             resources:
               limits:
-                nvidia.com/gpu: '1'
-                vpc.amazonaws.com/efa: '1'
+                nvidia.com/gpu: "1"
+                # vpc.amazonaws.com/efa: '1'  # uncomment for multi-node EFA
                 ephemeral-storage: 40Gi
               requests:
-                nvidia.com/gpu: '1'
-                vpc.amazonaws.com/efa: '1'
+                nvidia.com/gpu: "1"
+                # vpc.amazonaws.com/efa: '1'  # uncomment for multi-node EFA
                 ephemeral-storage: 40Gi
             ports:
               - containerPort: 8080
@@ -79,4 +80,28 @@ spec:
             emptyDir:
               medium: Memory
               sizeLimit: 15Gi
-
+    workerTemplate:
+      spec:
+        containers:
+          - name: vllm-worker
+            image: vllm/vllm-openai:latest
+            imagePullPolicy: Always
+            resources:
+              limits:
+                nvidia.com/gpu: "1"
+                ephemeral-storage: 40Gi
+              requests:
+                nvidia.com/gpu: "1"
+                ephemeral-storage: 40Gi
+            volumeMounts:
+              - mountPath: /dev/shm
+                name: dshm
+        tolerations:
+          - key: nvidia.com/gpu
+            operator: Exists
+            effect: NoSchedule
+        volumes:
+          - name: dshm
+            emptyDir:
+              medium: Memory
+              sizeLimit: 15Gi

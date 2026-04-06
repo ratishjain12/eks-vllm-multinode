@@ -50,11 +50,11 @@ module "eks" {
       # The EKS AL2023 NVIDIA AMI provides all of the necessary components
       # for accelerated workloads w/ EFA
       ami_type       = "AL2023_x86_64_NVIDIA"
-      instance_types = ["g6e.8xlarge"]
+      instance_types = ["g6e.xlarge"]
 
-      min_size     = 2
+      min_size     = 1
       max_size     = 10
-      desired_size = 2
+      desired_size = 1
 
       # Mount instance store volumes in RAID-0 for kubelet and containerd
       # https://github.com/awslabs/amazon-eks-ami/blob/master/doc/USER_GUIDE.md#raid-0-for-kubelet-and-containerd-raid0
